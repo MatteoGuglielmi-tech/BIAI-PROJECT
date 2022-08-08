@@ -141,6 +141,9 @@ def mutation_operator(random, candidate, args):
     mutant = copy.copy(candidate)
     for i, m in enumerate(mutant):
         if random.random() < mut_rate:
-            mutant[i] + # TODO
+            mutant[i] + # TODO write mutation function here
     mutant = bounder(mutant, args)
     return mutant
+
+
+    
