@@ -21,7 +21,7 @@ k_s_coniferous = 0.4
 '''
 =======================================================================================
 '''
-K = 29 ## defined as sum of all L_i. Needed to be redefined
+K = 29 ## defined as sum of all L_i. Needed to be redefined as np.sum(lower_bounds)
 F = 1.5
 PopSize = 50
 p_c = 0.6
