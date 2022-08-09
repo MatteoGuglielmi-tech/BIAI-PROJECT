@@ -5,6 +5,7 @@ from inspyred.ec.variators import mutator
 import copy
 
 ## CONSTANTS
+# TODO : put everything in args dictionary
 '''
 =======================================================================================
 given parameters
@@ -88,22 +89,22 @@ class Vehicle(object):
         size = args.get('fire_points')
         return [random.randint(0, 100) for i in range(size)]
 
-    def evaluator(self, candidates, args):
-        ## assumed candidates to be an array x_1, x-2, ..., x_N
+    def evaluator(self, candidate, args):
+        ## assumed candidate to be an array x_1, x-2, ..., x_N
         fitness = []
         fire_points_distances = np.array(args.get('distances')) # d0_i
         vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
         arrival_times = fire_points_distances/vehicles_speeds # tA_i
-        initial_spread_speeds = np.array(a * args.get('temperature') + b * args.get('wind_force') + c) #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * args.get('k_s') * args.get('k_phi') * args.get('k_w') # v_si # k_ are just values of different areas
+        initial_spread_speeds = a * np.array(args.get('temperature')) + b * np.array(args.get('wind_force')) + c #v_0i : array type since I assume different points may have different temperatures T
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
         f1 = 0
-        for c in candidates:
+        for c in candidate:
             # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * v_m - 2* fire_spread_speeds)
+            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * v_m - 2* fire_spread_speeds) # t_Ei
             f1 += extinguishing_times # objective of minimizing the extinguishing time of fires
             f2 += c
             fitness.append(ConstrainedPareto([f1, f2],
-                                             self.constraint_function(c),
+                                             self.constraint_function(c,args),
                                              self.maximize))
         return fitness
         
@@ -119,11 +120,12 @@ class Vehicle(object):
 
         # constraint 2
         # U_i is said to be a given parameter
-        initial_spread_speeds = np.array(a * args.get('temperature') + b * args.get('wind_force') + c) #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * args.get('k_s') * args.get('k_phi') * args.get('k_w') # v_si # k_ are just values of different areas
+        initial_spread_speeds = a * np.array(args.get('temperature')) + b * np.array(args.get('wind_force')) + c #v_0i : array type since I assume different points may have different temperatures T
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
         # L_i should be greater than 2v_si/v_m
         # I fixed its values
-        lower_bounds = np.array(2*fire_spread_speeds/v_m)
+        offset = 1
+        lower_bounds = 2*fire_spread_speeds/v_m + offset
         K = np.sum(lower_bounds)
         for c in candidates:
             if not (lower_bounds<=c and upper_bound>=c):
@@ -133,18 +135,18 @@ class Vehicle(object):
         return violations
 
 
-# to modify internal values
-@mutator    
-def mutation_operator(random, candidate, args):
-    mut_rate = args.setdefault('mutation_rate', 0.3)
-    bounder = args['_ec'].bounder
-    mutant = copy.copy(candidate)
-    for i, m in enumerate(mutant):
-        if random.random() < mut_rate:
-           # mutant[i]  # TODO write mutation function here
-           pass
-    mutant = bounder(mutant, args)
-    return mutant
+## to modify internal values
+#@mutator    
+#def mutation_operator(random, candidate, args):
+    #mut_rate = args.setdefault('mutation_rate', 0.3)
+    #bounder = args['_ec'].bounder
+    #mutant = copy.copy(candidate)
+    #for i, m in enumerate(mutant):
+        #if random.random() < mut_rate:
+           ## mutant[i]  # TODO write mutation function here
+           #pass
+    #mutant = bounder(mutant, args)
+    #return mutant
 
 
     
