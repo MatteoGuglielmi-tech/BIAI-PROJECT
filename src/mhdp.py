@@ -231,6 +231,38 @@ class MHDP :
             gbest = pbest[rand]
 
             return pbest, gbest
+        
+    def mutation_adjustment(self, pop:list(list(int)), args:dict) -> list(list(int)):
+        '''
+        PSEUDCODE : 
+        Input: Q(g)
+        Output: Q(g)
+        (1) While (i ≤PopSize)Do
+        (2)     For j =1 to N
+        (3)         If (xij(g)<Li)Then
+        (4)             xij(g)=Li;
+        (5)         Else if (xij(g)>Ui)Then
+        (6)             xij(g)=Ui;
+        (7)         End If;
+        (8)     End for;
+        (9) End While;
+        '''
+        
+        adjusted_pop = []
+        
+        ui = np.array(args.get('upper_bound_points'))
+        li = np.array(args.get('lower_bound_points'))
+        
+        for individual in pop:
+            for i, gene in enumerate(individual):
+                if gene < li[i]:
+                    individual[i] = li[i]
+                if gene > ui[i]:
+                    individual[i] = ui[i]
+            
+            adjusted_pop.append(individual)
+        
+        return adjusted_pop
     
     def mutation(self, pop:list(list(int)), pbests:list(list(int)), gbest:list(int), args:dict) -> list(list(int)):
 
@@ -243,10 +275,10 @@ class MHDP :
         r2 = args.get('r2')
         f = args.get('F')
 
-        for i, c in enumerate(pop):
+        for i, individual in enumerate(pop):
             while True:
-                j = random.randint(0, len(pop-1))
-                k = random.randint(0, len(pop-1))
+                j = random.randint(0, len(pop)-1)
+                k = random.randint(0, len(pop)-1)
 
                 if j != k:
                     break
@@ -256,13 +288,49 @@ class MHDP :
 
             pbest = pbests[i]
 
-            mutated_individual = c
-            for j, gene in enumerate(c):
-                mutated_individual[j] = c[j] + round(r1 * (gbest[j] - c[j]) + r2 * (pbest[j] - c[j]) + f * (xj[j] - xk[j]))
+            mutated_individual = individual
+            for j, gene in enumerate(individual):
+                mutated_individual[j] = gene + round(r1 * (gbest[j] - gene) + r2 * (pbest[j] - gene) + f * (xj[j] - xk[j]))
 
             mutated_pop.append(mutated_individual)
+
+        mutated_pop = self.mutation_adjustment(mutated_pop)
         
         return mutated_pop
+    
+    def crossover(self, pop:list(list(int)), args:dict):
+        '''
+        PSEUDCODE : 
+        Input: Q(g)
+        Output: Q(g)
+        (1) While (i ≤PopSize)Do
+        (2)     For j =1 to N
+        (3)         Randomly select neighboring individual xk(g), k  ∈ {1, 2, . . . , PopSize}and k !=i;
+        (4)         If (r3 < Pc && xij(g)!=xkj(g)) Then
+        (5)             xij(g)=xkj(g);
+        (6)         End If;
+        (7)     End for;
+        (8) End While;
+        '''
+
+        crossed_pop = []
+
+        pc = args.get('Pc')
+
+        for individual in pop:
+            for i in range(len(individual)):
+                k = random.randint(0, len(pop)-1)
+                xk = pop[k]
+
+                r3 = random.random()
+
+                if r3 < pc and individual[i] != xk[i]:
+                    individual[i] = xk[i]
+            
+            crossed_pop.append(individual)
+        
+        return crossed_pop
+
 
 
 
