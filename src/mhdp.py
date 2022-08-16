@@ -21,7 +21,6 @@ import math
 import numpy as np
 from numpy.random import multinomial
 
-
 #def RandIntVec(ListSize : int, ListSumValue : int) -> list(int):
     #"""
     #Normal Distribution Construction....It's very flexible and hideous
@@ -51,7 +50,7 @@ from numpy.random import multinomial
     #return OutputValue
 
 
-def compute_fitness(candidate : list(int), args : dict) -> list(tuple):
+def compute_fitness(candidate:list(int), args:dict) -> list(tuple):
     '''Compute fitness of a candidate (possible solution/individual)
         Params:
         ------
@@ -102,7 +101,7 @@ def check_constraint(candidate, args):
     
     return (constr5 and constr6)
 
-def check_all_candidates(loc : list(list(int)), args : dict) -> bool :
+def check_all_candidates(loc : list(list(int)), args:dict) -> bool :
     checklist = []
     for c in loc :
         checklist.append(check_constraint(c, args))
@@ -176,12 +175,13 @@ class MHDP :
                 if np.sum(candidate) >= args.get('K') and np.sum(candidate) <= args.get('M') :
                     q0 += candidate #Q(0) = Q(0) ∪ {Xi};
                     flag = True
-                else : flag = False
+                else : 
+                    flag = False
             i += 1
         return q0
         
     # point C section III, calculating fitness values and screening pareto solutions
-    def evaluation(self, old_pop:list(list(int)), new_pop:list(list(int)), old_archive : list(list(int)), args : dict) :
+    def evaluation(self, old_pop:list(list(int)), new_pop:list(list(int)), old_archive:list(list(int)), args:dict):
         '''
         PSEUDCODE : 
         Input: Q(g - 1), Q(g)
@@ -218,7 +218,7 @@ class MHDP :
                 pbest.append(new_pop[i])
             elif check_all_candidates(new_pop, args) and new_fitnesses[i] == old_fitnesses[i] :
                 rand = random.randint(0,1)
-                if rand ==1 :
+                if rand:
                     pbest.append(new_pop[i])
                 else:
                     pbest.append(old_pop[i])
@@ -231,7 +231,45 @@ class MHDP :
             gbest = pbest[rand]
 
             return pbest, gbest
+    
+    def mutation(self, pop:list(list(int)), pbests:list(list(int)), gbest:list(int), args:dict) -> list(list(int)):
+
+        '''
+        Xi(g+1) = Xi(g+1) + Φ[r1(Gbest - Xi(g)) + r2(Pbest - Xi(g)) + F(Xj(g) - Xk(g))]
+        '''
+        mutated_pop = []
+
+        r1 = args.get('r1')
+        r2 = args.get('r2')
+        f = args.get('F')
+
+        for i, c in enumerate(pop):
+            while True:
+                j = random.randint(0, len(pop-1))
+                k = random.randint(0, len(pop-1))
+
+                if j != k:
+                    break
         
+            xj = pop[j]
+            xk = pop[k]
+
+            pbest = pbests[i]
+
+            mutated_individual = c
+            for j, gene in enumerate(c):
+                mutated_individual[j] = c[j] + round(r1 * (gbest[j] - c[j]) + r2 * (pbest[j] - c[j]) + f * (xj[j] - xk[j]))
+
+            mutated_pop.append(mutated_individual)
+        
+        return mutated_pop
+
+
+
+
+
+
+
         
                 
 

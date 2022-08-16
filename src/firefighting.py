@@ -10,12 +10,15 @@ import copy
 =======================================================================================
 given parameters
 '''
-a = 0.053
+# a b c - factors related with the terrain
+a = 0.053 
 b = 0.048
 c = 0.275
-v_m = 2.5 #m/min # it is assumed to be identical in all study cases because it depends on the motorcade configuration
-M = 40 # parameter set arbitrarily
+v_m = 2.5 # extinguishing speed of m vehicle. m/min # it is assumed to be identical in all study cases because it depends on the motorcade configuration
+M = 40 # parameter set arbitrarily - number of vehicles
 upper_bound = 10 # parameter set arbitrarily
+
+# correction factors of fuel types
 k_s_meadow = 1
 k_s_secondary = 0.7
 k_s_coniferous = 0.4
@@ -44,7 +47,7 @@ class ConstrainedPareto(Pareto):
     def __init__(self, values=None, violations=None, ec_maximize=True):
         Pareto.__init__(self, values)
         self.violations = violations
-        self.ec_maximize=ec_maximize
+        self.ec_maximize = ec_maximize
     
     def __lt__(self, other):
         if self.violations is None :
@@ -90,17 +93,17 @@ class Vehicle(object):
         return [random.randint(0, 100) for i in range(size)]
 
     def evaluator(self, candidate, args):
-        ## assumed candidate to be an array x_1, x-2, ..., x_N
+        # assumed candidate to be an array x_1, x_2, ..., x_N
         fitness = []
         fire_points_distances = np.array(args.get('distances')) # d0_i
         vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
         arrival_times = fire_points_distances/vehicles_speeds # tA_i
-        initial_spread_speeds = a * np.array(args.get('temperature')) + b * np.array(args.get('wind_force')) + c #v_0i : array type since I assume different points may have different temperatures T
+        initial_spread_speeds = a * np.array(args.get('temperature')) + b * np.array(args.get('wind_force')) + c # v_0i : array type since I assume different points may have different temperatures T
         fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
         f1 = 0
         for c in candidate:
             # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * v_m - 2* fire_spread_speeds) # t_Ei
+            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * v_m - 2 * fire_spread_speeds) # t_Ei
             f1 += extinguishing_times # objective of minimizing the extinguishing time of fires
             f2 += c
             fitness.append(ConstrainedPareto([f1, f2],
@@ -111,6 +114,7 @@ class Vehicle(object):
     def constraint_function(self, candidates, args):
         if not self.constrained :
             return 0
+
         violations = 0 
 
         # constraint 1
@@ -130,6 +134,7 @@ class Vehicle(object):
         for c in candidates:
             if not (lower_bounds<=c and upper_bound>=c):
                 violations -= c
+                
         # constraint 3
         # this contraint is implicit in the formulation
         return violations
