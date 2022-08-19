@@ -216,6 +216,9 @@ class MHDP :
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
             if check_all_candidates(new_pop, args) and new_fitnesses[i] > old_fitnesses[i]:
                 pbest.append(new_pop[i])
+                old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
+                old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
+
             elif check_all_candidates(new_pop, args) and new_fitnesses[i] == old_fitnesses[i] :
                 rand = random.randint(0,1)
                 if rand:
@@ -225,12 +228,28 @@ class MHDP :
             else :
                 pbest.append(old_pop[i])
 
-            ## pbest is an archive of best pareto solutions in the current population.
-            ## taking distance from pseudocode becasue it don't get the logic
-            rand = random.randint(pop_size)
-            gbest = pbest[rand]
+        for i in pop_size:
+            ## dominance here is defined based on objective values
+            ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
+            if check_all_candidates(new_pop, args) and new_fitnesses[i] > old_fitnesses[i]:
+                pbest.append(new_pop[i])
+                old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
+                old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            return pbest, gbest
+            elif check_all_candidates(new_pop, args) and new_fitnesses[i] == old_fitnesses[i] :
+                rand = random.randint(0,1)
+                if rand:
+                    pbest.append(new_pop[i])
+                else:
+                    pbest.append(old_pop[i])
+            else :
+                pbest.append(old_pop[i])
+
+        ## pbest is an archive of best pareto solutions in the current population.   
+        rand = random.randint(pop_size)
+        gbest = old_archive[rand]
+
+        return pbest, gbest
         
     def mutation_adjustment(self, pop:list(list(int)), args:dict) -> list(list(int)):
         '''
