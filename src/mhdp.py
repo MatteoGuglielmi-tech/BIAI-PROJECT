@@ -265,7 +265,6 @@ class MHDP :
         return adjusted_pop
     
     def mutation(self, pop:list(list(int)), pbests:list(list(int)), gbest:list(int), args:dict) -> list(list(int)):
-
         '''
         Xi(g+1) = Xi(g+1) + Φ[r1(Gbest - Xi(g)) + r2(Pbest - Xi(g)) + F(Xj(g) - Xk(g))]
         '''
@@ -274,6 +273,9 @@ class MHDP :
         r1 = args.get('r1')
         r2 = args.get('r2')
         f = args.get('F')
+
+        if not 0<f<2 :
+            raise ValueError('the DE scaling factor should be in range (0,2)')
 
         for i, individual in enumerate(pop):
             while True:
@@ -305,7 +307,7 @@ class MHDP :
         Output: Q(g)
         (1) While (i ≤PopSize)Do
         (2)     For j =1 to N
-        (3)         Randomly select neighboring individual xk(g), k  ∈ {1, 2, . . . , PopSize}and k !=i;
+        (3)         Randomly select neighboring individual xk(g), k  ∈ {1, 2, . . . , PopSize} and k !=i;
         (4)         If (r3 < Pc && xij(g)!=xkj(g)) Then
         (5)             xij(g)=xkj(g);
         (6)         End If;
