@@ -244,9 +244,9 @@ class MHDP :
                     pbest.append(old_pop[i])
             else :
                 pbest.append(old_pop[i])
-
-        ## pbest is an archive of best pareto solutions in the current population.   
+  
         rand = random.randint(pop_size)
+        ## rather than defining a new archive, the old archive is updated with dominant solutions
         gbest = old_archive[rand]
 
         return pbest, gbest
