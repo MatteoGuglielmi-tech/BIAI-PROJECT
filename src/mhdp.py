@@ -68,6 +68,8 @@ def compute_fitness(candidate:list(int), args:dict) -> list(tuple):
     arrival_times = fire_points_distances/vehicles_speeds # tA_i
     initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
     fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+    
+    args["lower_bound_points"] = 2*fire_spread_speeds/args.get('v_m')
     f1 = 0
     for c in candidate:
         # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
@@ -211,15 +213,15 @@ class MHDP :
 
         pbest = []
         pop_size, args = self.attributes()
-        for i in pop_size:
+        for i in range(len(pop_size)):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if check_all_candidates(new_pop, args) and new_fitnesses[i] > old_fitnesses[i]:
+            if check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
                 pbest.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif check_all_candidates(new_pop, args) and new_fitnesses[i] == old_fitnesses[i] :
+            elif check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
                 rand = random.randint(0,1)
                 if rand:
                     pbest.append(new_pop[i])
@@ -228,15 +230,15 @@ class MHDP :
             else :
                 pbest.append(old_pop[i])
 
-        for i in pop_size:
+        for i in range(len(pop_size)):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if check_all_candidates(new_pop, args) and new_fitnesses[i] > old_fitnesses[i]:
+            if check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
                 pbest.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif check_all_candidates(new_pop, args) and new_fitnesses[i] == old_fitnesses[i] :
+            elif check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
                 rand = random.randint(0,1)
                 if rand:
                     pbest.append(new_pop[i])
