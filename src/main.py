@@ -1,6 +1,7 @@
 import inspyred
 from math import exp
 import random
+from mhdp import MHDP
 
 args = {}
 
@@ -101,3 +102,16 @@ v_w = { # wind speeds per wind force level
 args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
 args["r1"] = random.random()
 args["r2"] = random.random()
+
+if __name__ == '__main__':
+    mhdp = MHDP(args["pop_size"], args)
+
+    # put this in a method, e.g. mhdp.run_algo(...)
+    pop = mhdp.init_population()
+
+    pbest, gbest = mhdp.evaluation(pop, pop, pop)
+
+    for i in range(args["gmax"]):
+        # mutation
+        # crossover
+        pass

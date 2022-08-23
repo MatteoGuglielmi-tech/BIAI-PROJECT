@@ -183,7 +183,7 @@ class MHDP :
         return q0
         
     # point C section III, calculating fitness values and screening pareto solutions
-    def evaluation(self, old_pop:list(list(int)), new_pop:list(list(int)), old_archive:list(list(int)), args:dict):
+    def evaluation(self, old_pop:list(list(int)), new_pop:list(list(int)), old_archive:list(list(int))):
         '''
         PSEUDCODE : 
         Input: Q(g - 1), Q(g)
@@ -203,6 +203,8 @@ class MHDP :
         (12) Produce A(g);
         (13) Randomly choose one of individuals in A(g) as Gbest;
         '''
+        pop_size, args = self.attributes()
+
         new_fitnesses = []
         for idx, candidate in enumerate(new_pop):
             new_fitnesses.append((idx, compute_fitness(candidate, args))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
@@ -212,7 +214,6 @@ class MHDP :
             old_fitnesses.append((idx, compute_fitness(candidate, args)))
 
         pbest = []
-        pop_size, args = self.attributes()
         for i in range(len(pop_size)):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
