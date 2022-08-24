@@ -14,7 +14,7 @@ args["gmax"] = 100  # n_iterations
 # Vehicles parameters
 args["K"] = 29  # Lower bound of the total number of vehicles required for forest fire emergency scheduling
 args["M"] = 40  # Upper bound of the total number of fire engines in the fire emergency scheduling centre
-args["v_m"] = 0.15   # extinguishing speed  2.5 m/min -> 0.15 km/h
+args["v_m"] = 2.5 # 0.15   # extinguishing speed  2.5 m/min -> 0.15 km/h
 args["vehicles_speeds"] = 54    # km/h
 
 # Fire points parameters
@@ -29,14 +29,14 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = args["N"]*[args["M"]/args["N"]]
+args["upper_bound_points"] = args["N"]*[args["M"]]#/args["N"]
 
 # Terrain parameters
 # factors related with the terrain for the spread model
 args["a"] = 0.053
 args["b"] = 0.048
 args["c"] = 0.275
-args["temperature"] = [25, 23, 2226, 24, 23, 22]
+args["temperature"] = [25, 23, 22, 26, 24, 23, 22]
 args["wind_force"] = [2, 1, 1, 2, 2, 2, 1]
 fuel_types = ["Meadow", "Meadow", "Meadow", "Meadow", "Meadow", "Meadow", "Meadow"]
 slopes = [10, 2, 5, 15, 13, 8, 8]
@@ -85,7 +85,7 @@ def k_phi_map(slope):
         return 17.50
 
 args["k_phi"] = list(map(lambda x: k_phi_map(x), slopes))
-v_w = { # wind speeds per wind force level
+v_w = { # wind speeds per wind force level km/h
     1: 2, 
     2: 3.6, 
     3: 5.4, 
@@ -99,6 +99,22 @@ v_w = { # wind speeds per wind force level
     11: 27.8, 
     12: 29.8
 }
+
+'''
+km/h
+1: 7.2, 
+    2: 12.96, 
+    3: 19.44, 
+    4: 26.64, 
+    5: 35.28, 
+    6: 44.28, 
+    7: 53.64, 
+    8: 63.72, 
+    9: 74.88, 
+    10: 87.12, 
+    11: 100.08, 
+    12: 107.28
+'''
 args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
 args["r1"] = random.random()
 args["r2"] = random.random()
@@ -106,12 +122,4 @@ args["r2"] = random.random()
 if __name__ == '__main__':
     mhdp = MHDP(args["pop_size"], args)
 
-    # put this in a method, e.g. mhdp.run_algo(...)
-    pop = mhdp.init_population()
-
-    pbest, gbest = mhdp.evaluation(pop, pop, pop)
-
-    for i in range(args["gmax"]):
-        # mutation
-        # crossover
-        pass
+    final_pop = mhdp.run_mhdp()

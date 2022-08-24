@@ -50,66 +50,6 @@ from numpy.random import multinomial
     #return OutputValue
 
 
-def compute_fitness(candidate:list(int), args:dict) -> list(tuple):
-    '''Compute fitness of a candidate (possible solution/individual)
-        Params:
-        ------
-            candidate : list(int)
-                encoding of an individual
-            args : dict
-                contains all problem related information
-        Return:
-        ------
-            list containid tuple of the form (f1,f2) corresponind to candidate
-    '''
-    fitness = []
-    fire_points_distances = np.array(args.get('distances')) # d0_i
-    vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
-    arrival_times = fire_points_distances/vehicles_speeds # tA_i
-    initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-    fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
-    
-    args["lower_bound_points"] = 2*fire_spread_speeds/args.get('v_m')
-    f1 = 0
-    for c in candidate:
-        # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-        extinguishing_times = (fire_spread_speeds * arrival_times)/(c * args.get('v_m') - 2* fire_spread_speeds) # t_Ei
-        f1 += extinguishing_times # objective of minimizing the extinguishing time of fires
-        f2 += c
-        fitness.append((f1,f2))
-    return fitness
-
-
-def check_constraint(candidate, args):
-    '''Check whether constraints 5 and 6 are respected
-        Params:
-        ------
-            candidate : list(int)
-                individual encoding
-            args : dict
-                parameters
-        Return:
-        ------
-            boolean type. If True constraints respected, otherwise violations.
-    '''
-    constr5 = (np.sum(candidate) >= args.get('K') and np.sum(candidate) <= args.get('M')) 
-    ui = np.array(args.get('upper_bound_points'))
-    li = np.array(args.get('lower_bound_points'))
-    bools = []
-    for idx, c in enumerate(candidate) :
-        bools.append(c >= li[idx] and c<=ui[idx])
-    if np.all(bools) :
-        constr6 = True
-    
-    return (constr5 and constr6)
-
-def check_all_candidates(loc : list(list(int)), args:dict) -> bool :
-    checklist = []
-    for c in loc :
-        checklist.append(check_constraint(c, args))
-    return np.all(checklist)
-
-
 @dataclass
 class MHDP :
     '''Class that implements the MHDP algorithm'''
@@ -162,15 +102,21 @@ class MHDP :
             (13) i + +;
         (14) End While;
         '''
+        pop_size, args = self.attributes
 
-
-        pop_size, args = self.attributes()
         i = 0
-        ui = np.array(args.get('upper_bound_points'))
-        li = np.array(args.get('lower_bound_points'))
-        candidate = []
+
+        initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+        args["lower_bound_points"] = 2*fire_spread_speeds/args.get('v_m') # Li > 2vsi/vm
+
+        
+        ui = np.array(args.get('upper_bound_points')).astype(int)
+        li = np.array(args.get('lower_bound_points')).astype(int)
+
         q0 = []
         while i <= pop_size :
+            candidate = []
             flag = False
             while not flag :
                 candidate.append(random.randint(li[i], ui[i])) # generate xi within Li and Ui and compose Xi
@@ -181,9 +127,73 @@ class MHDP :
                     flag = False
             i += 1
         return q0
+
+    def compute_fitness(self, candidate: list[int]) -> list[tuple]:
+        '''Compute fitness of a candidate (possible solution/individual)
+            Params:
+            ------
+                candidate : list(int)
+                    encoding of an individual
+                args : dict
+                    contains all problem related information
+            Return:
+            ------
+                list containid tuple of the form (f1,f2) corresponind to candidate
+        '''
+        pop_size, args = self.attributes
+
+        fitness = []
+        fire_points_distances = np.array(args.get('distances')) # d0_i
+        vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
+        arrival_times = fire_points_distances/vehicles_speeds # tA_i
+        initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+        
+        f1 = 0
+        for c in candidate:
+            # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
+            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * args.get('v_m') - 2* fire_spread_speeds) # t_Ei
+            f1 += extinguishing_times # objective of minimizing the extinguishing time of fires
+            f2 += c
+            fitness.append((f1,f2))
+        return fitness
+
+
+    def check_constraint(self, candidate):
+        '''Check whether constraints 5 and 6 are respected
+            Params:
+            ------
+                candidate : list(int)
+                    individual encoding
+                args : dict
+                    parameters
+            Return:
+            ------
+                boolean type. If True constraints respected, otherwise violations.
+        '''
+        pop_size, args = self.attributes
+
+        constr5 = (np.sum(candidate) >= args.get('K') and np.sum(candidate) <= args.get('M')) 
+        ui = np.array(args.get('upper_bound_points'))
+        li = np.array(args.get('lower_bound_points'))
+        bools = []
+        for idx, c in enumerate(candidate) :
+            bools.append(c >= li[idx] and c<=ui[idx])
+        if np.all(bools) :
+            constr6 = True
+        
+        return (constr5 and constr6)
+
+    def check_all_candidates(self, loc : list[list[int]]) -> bool :
+        pop_size, args = self.attributes
+        
+        checklist = []
+        for c in loc :
+            checklist.append(self.check_constraint(c, args))
+        return np.all(checklist)
         
     # point C section III, calculating fitness values and screening pareto solutions
-    def evaluation(self, old_pop:list(list(int)), new_pop:list(list(int)), old_archive:list(list(int))):
+    def evaluation(self, old_pop:list[list[int]], new_pop:list[list[int]], old_archive:list[list[int]]):
         '''
         PSEUDCODE : 
         Input: Q(g - 1), Q(g)
@@ -203,26 +213,26 @@ class MHDP :
         (12) Produce A(g);
         (13) Randomly choose one of individuals in A(g) as Gbest;
         '''
-        pop_size, args = self.attributes()
+        pop_size, args = self.attributes
 
         new_fitnesses = []
         for idx, candidate in enumerate(new_pop):
-            new_fitnesses.append((idx, compute_fitness(candidate, args))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
+            new_fitnesses.append((idx, self.compute_fitness(candidate, args))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
         
         old_fitnesses = []
         for idx, candidate in enumerate(old_pop):
-            old_fitnesses.append((idx, compute_fitness(candidate, args)))
+            old_fitnesses.append((idx, self.compute_fitness(candidate, args)))
 
         pbest = []
         for i in range(len(pop_size)):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+            if self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
                 pbest.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+            elif self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
                 rand = random.randint(0,1)
                 if rand:
                     pbest.append(new_pop[i])
@@ -234,12 +244,12 @@ class MHDP :
         for i in range(len(pop_size)):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+            if self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
                 pbest.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+            elif self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
                 rand = random.randint(0,1)
                 if rand:
                     pbest.append(new_pop[i])
@@ -254,7 +264,7 @@ class MHDP :
 
         return pbest, gbest
         
-    def mutation_adjustment(self, pop:list(list(int)), args:dict) -> list(list(int)):
+    def mutation_adjustment(self, pop:list[list[int]]) -> list[list[int]]:
         '''
         PSEUDCODE : 
         Input: Q(g)
@@ -269,6 +279,7 @@ class MHDP :
         (8)     End for;
         (9) End While;
         '''
+        pop_size, args = self.attributes
         
         adjusted_pop = []
         
@@ -286,10 +297,12 @@ class MHDP :
         
         return adjusted_pop
     
-    def mutation(self, pop:list(list(int)), pbests:list(list(int)), gbest:list(int), args:dict) -> list(list(int)):
+    def mutation(self, pop:list[list[int]], pbests:list[list[int]], gbest:list[int]) -> list[list[int]]:
         '''
         Xi(g+1) = Xi(g+1) + Φ[r1(Gbest - Xi(g)) + r2(Pbest - Xi(g)) + F(Xj(g) - Xk(g))]
         '''
+        pop_size, args = self.attributes
+        
         mutated_pop = []
 
         r1 = args.get('r1')
@@ -322,7 +335,7 @@ class MHDP :
         
         return mutated_pop
     
-    def crossover(self, pop:list(list(int)), args:dict):
+    def crossover(self, pop:list[list[int]]):
         '''
         PSEUDCODE : 
         Input: Q(g)
@@ -336,7 +349,8 @@ class MHDP :
         (7)     End for;
         (8) End While;
         '''
-
+        pop_size, args = self.attributes
+        
         crossed_pop = []
 
         pc = args.get('Pc')
@@ -355,7 +369,24 @@ class MHDP :
         
         return crossed_pop
 
+    def run_mhdp(self):
+        pop_size, args = self.attributes
+        
+        pop = self.init_population()
+        
+        pbests, gbest = self.evaluation(pop, pop, pop)
 
+        for i in range(args["gmax"]):
+            # mutation
+            mutated_pop = self.mutation(pop, pbests, gbest)
+            pbests, gbest = self.evaluation(pop, mutated_pop, pbests)
+            # crossover
+            crossed_pop = self.crossover(mutated_pop)
+            pbests, gbest = self.evaluation(mutated_pop, crossed_pop, pbests)
+            
+            pop = crossed_pop
+        
+        return pbests, gbest
 
 
 
