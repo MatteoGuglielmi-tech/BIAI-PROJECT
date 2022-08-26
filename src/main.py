@@ -100,24 +100,24 @@ v_w = { # wind speeds per wind force level m/s and kmh
         11: 27.8, 
         12: 29.8
     },
-    'kmh': {
-        1: 7.2, 
-        2: 12.96, 
-        3: 19.44, 
-        4: 26.64, 
-        5: 35.28, 
-        6: 44.28, 
-        7: 53.64, 
-        8: 63.72, 
-        9: 74.88, 
-        10: 87.12, 
-        11: 100.08, 
-        12: 107.28
-    }
+    # 'kmh': {
+    #     1: 7.2, 
+    #     2: 12.96, 
+    #     3: 19.44, 
+    #     4: 26.64, 
+    #     5: 35.28, 
+    #     6: 44.28, 
+    #     7: 53.64, 
+    #     8: 63.72, 
+    #     9: 74.88, 
+    #     10: 87.12, 
+    #     11: 100.08, 
+    #     12: 107.28
+    # }
 }
 
 args["k_w_ms"] = list(map(lambda x: exp(0.1783 * v_w['ms'][x]), args["wind_force"]))
-args["k_w_kmh"] = list(map(lambda x: exp(0.1783 * v_w['kmh'][x]), args["wind_force"]))
+# args["k_w_kmh"] = list(map(lambda x: exp(0.1783 * v_w['kmh'][x]), args["wind_force"]))
 args["r1"] = random.random()
 args["r2"] = random.random()
 

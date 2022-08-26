@@ -121,26 +121,28 @@ class MHDP :
         vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
         arrival_times = fire_points_distances[0][1:]/vehicles_speeds # tA_i
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_kmh')) # v_si # k_ are just values of different areas
-        
-        # (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i])
-        #             h
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_ms')) # v_si # k_ are just values of different areas
         
         fire_spread_speeds = utils.from_mmin_to_kmh(fire_spread_speeds)
+        v_m = utils.from_mmin_to_kmh(args.get('v_m'))
+        # (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i])
+        #             km/h                 h                   km/h                 km/h                  => h*km*h/km*h => h       
 
         f1 = []
         f2 = 0
         for i, c in enumerate(candidate):
             # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-            if c < 0:
+            if c <= 0:
                 extinguishing_time = np.inf
             else:
-                extinguishing_time = (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i]) # t_Ei
+                extinguishing_time = (fire_spread_speeds[i] * arrival_times[i])/(c * v_m - 2*fire_spread_speeds[i]) # t_Ei
            
             f1.append(extinguishing_time) # objective of minimizing the extinguishing time of fires
             f2 += c
 
-        return (np.sum(f1), f2)
+        f1 = np.sum(f1)
+        
+        return (f1, f2)
 
 
     def check_constraint(self, candidate):
@@ -162,7 +164,7 @@ class MHDP :
         li = np.array(args.get('lower_bound_points')).astype(int)
         bools = []
         for idx, c in enumerate(candidate) :
-            bools.append(c >= li[idx] and c<=ui[idx])
+            bools.append(c >= li[idx] and c <= ui[idx])
 
         constr6 = False
         if np.all(bools) :
@@ -213,7 +215,7 @@ class MHDP :
         for i in range(pop_size):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+            if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] < old_fitnesses[i][1]:
                 pbests.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
@@ -295,8 +297,8 @@ class MHDP :
         r2 = args.get('r2')
         f = args.get('F')
 
-        if not 0<f<2 :
-            raise ValueError('the DE scaling factor should be in range (0,2)')
+        if not 0 < f < 2:
+            raise ValueError('the DE scaling factor should be in range (0, 2)')
 
         for i, individual in enumerate(pop):
             while True:
@@ -312,8 +314,8 @@ class MHDP :
             pbest = pbests[i]
 
             mutated_individual = individual
-            for j, gene in enumerate(individual):
-                mutated_individual[j] = gene + round(r1 * (gbest[j] - gene) + r2 * (pbest[j] - gene) + f * (xj[j] - xk[j]))
+            for t, gene in enumerate(individual):
+                mutated_individual[t] = gene + round(r1 * (gbest[t] - gene) + r2 * (pbest[t] - gene) + f * (xj[t] - xk[t]))
 
             mutated_pop.append(mutated_individual)
 
@@ -343,7 +345,12 @@ class MHDP :
 
         for individual in pop:
             for i in range(len(individual)):
-                k = random.randint(0, len(pop)-1)
+                while True:
+                    k = random.randint(0, len(pop)-1)
+
+                    if k!=i:
+                        break
+                    
                 xk = pop[k]
 
                 r3 = random.random()
