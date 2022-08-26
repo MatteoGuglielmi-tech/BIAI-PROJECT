@@ -78,9 +78,13 @@ class MHDP :
         n_fire_points = args["N"]
 
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_ms')) # v_si # k_ are just values of different areas
-        args["lower_bound_points"] = 2*fire_spread_speeds/args.get('v_m') # Li > 2vsi/vm
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+        # conversion to km/h
+        fire_spread_speeds = utils.from_mmin_to_kmh(fire_spread_speeds)
+        v_m = utils.from_mmin_to_kmh(args.get('v_m'))
 
+        args["lower_bound_points"] = np.ceil(2*fire_spread_speeds/v_m) # Li > 2vsi/vm
+        
         ui = np.array(args.get('upper_bound_points')).astype(int)
         li = np.array(args.get('lower_bound_points')).astype(int)
 
@@ -121,21 +125,16 @@ class MHDP :
         vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
         arrival_times = fire_points_distances[0][1:]/vehicles_speeds # tA_i
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_ms')) # v_si # k_ are just values of different areas
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
         
         fire_spread_speeds = utils.from_mmin_to_kmh(fire_spread_speeds)
-        v_m = utils.from_mmin_to_kmh(args.get('v_m'))
-        # (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i])
-        #             km/h                 h                   km/h                 km/h                  => h*km*h/km*h => h       
+        v_m = utils.from_mmin_to_kmh(args.get('v_m'))      
 
         f1 = []
         f2 = 0
         for i, c in enumerate(candidate):
             # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-            if c <= 0:
-                extinguishing_time = np.inf
-            else:
-                extinguishing_time = (fire_spread_speeds[i] * arrival_times[i])/(c * v_m - 2*fire_spread_speeds[i]) # t_Ei
+            extinguishing_time = (fire_spread_speeds[i] * arrival_times[i])/(c * v_m - 2*fire_spread_speeds[i]) # t_Ei
            
             f1.append(extinguishing_time) # objective of minimizing the extinguishing time of fires
             f2 += c
@@ -195,8 +194,8 @@ class MHDP :
                 (7) Randomly choose one of them as Pbest(i);
             (8) End If;
         (9) End For;
-        (10) Then the new Perato solutions in Q(g) are merged into A(g - 1);
-        (11) Again screen the Pareto solutions because domination relations may exist between the new Perato solutions
+        (10) Then the new Pareto solutions in Q(g) are merged into A(g - 1);
+        (11) Again screen the Pareto solutions because domination relations may exist between the new Pareto solutions
         and A(g - 1);
         (12) Produce A(g);
         (13) Randomly choose one of individuals in A(g) as Gbest;
@@ -204,23 +203,20 @@ class MHDP :
         pop_size, args = self.attributes
 
         new_fitnesses = []
-        for idx, candidate in enumerate(new_pop):
-            new_fitnesses.append((idx, self.compute_fitness(candidate))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
+        for candidate in new_pop:
+            new_fitnesses.append(self.compute_fitness(candidate)) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
         
         old_fitnesses = []
-        for idx, candidate in enumerate(old_pop):
-            old_fitnesses.append((idx, self.compute_fitness(candidate)))
+        for candidate in old_pop:
+            old_fitnesses.append(self.compute_fitness(candidate))
 
         pbests = []
         for i in range(pop_size):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] < old_fitnesses[i][1]:
+            if self.check_constraint(new_pop[i]) and new_fitnesses[i] < old_fitnesses[i]:
                 pbests.append(new_pop[i])
-                old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
-                old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
-
-            elif self.check_constraint(new_pop[i]) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+            elif self.check_constraint(new_pop[i]) and new_fitnesses[i] == old_fitnesses[i] :
                 rand = random.randint(0,1)
                 if rand:
                     pbests.append(new_pop[i])
@@ -232,12 +228,12 @@ class MHDP :
         # for i in range(pop_size):
         #     ## dominance here is defined based on objective values
         #     ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-        #     if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+        #     if self.check_constraint(new_pop[i]) and new_fitnesses[i] < old_fitnesses[i]:
         #         pbests.append(new_pop[i])
         #         old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
         #         old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-        #     elif self.check_constraint(new_pop[i]) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+        #     elif self.check_constraint(new_pop[i]) and new_fitnesses[i] == old_fitnesses[i] :
         #         rand = random.randint(0,1)
         #         if rand:
         #             pbests.append(new_pop[i])
@@ -389,11 +385,13 @@ class MHDP :
 
             # crossover
             crossed_pop = self.crossover(mutated_pop)
-            pbests, gbest = self.evaluation(mutated_pop, crossed_pop, pbests)
+            pbests, gbest = self.evaluation(pop, crossed_pop, pbests)
             
             pop = crossed_pop
         
-        return self.filter_feasible(pbests)
+        feasible_sol = self.filter_feasible(pbests)
+
+        return feasible_sol
 
         
                 
