@@ -29,7 +29,7 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = args["N"]*[args["M"]]#/args["N"]
+args["upper_bound_points"] = [10, 10, 10, 10, 10, 10, 10]#args["N"]*[args["M"]/args["N"]] 
 
 # Terrain parameters
 # factors related with the terrain for the spread model
@@ -85,41 +85,50 @@ def k_phi_map(slope):
         return 17.50
 
 args["k_phi"] = list(map(lambda x: k_phi_map(x), slopes))
-v_w = { # wind speeds per wind force level km/h
-    1: 2, 
-    2: 3.6, 
-    3: 5.4, 
-    4: 7.4, 
-    5: 9.8, 
-    6: 12.3, 
-    7: 14.9, 
-    8: 17.7, 
-    9: 20.8, 
-    10: 24.2, 
-    11: 27.8, 
-    12: 29.8
+v_w = { # wind speeds per wind force level m/s and kmh
+    'ms': {
+        1: 2, 
+        2: 3.6, 
+        3: 5.4, 
+        4: 7.4, 
+        5: 9.8, 
+        6: 12.3, 
+        7: 14.9, 
+        8: 17.7, 
+        9: 20.8, 
+        10: 24.2, 
+        11: 27.8, 
+        12: 29.8
+    },
+    'kmh': {
+        1: 7.2, 
+        2: 12.96, 
+        3: 19.44, 
+        4: 26.64, 
+        5: 35.28, 
+        6: 44.28, 
+        7: 53.64, 
+        8: 63.72, 
+        9: 74.88, 
+        10: 87.12, 
+        11: 100.08, 
+        12: 107.28
+    }
 }
 
-'''
-km/h
-1: 7.2, 
-    2: 12.96, 
-    3: 19.44, 
-    4: 26.64, 
-    5: 35.28, 
-    6: 44.28, 
-    7: 53.64, 
-    8: 63.72, 
-    9: 74.88, 
-    10: 87.12, 
-    11: 100.08, 
-    12: 107.28
-'''
-args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
+args["k_w_ms"] = list(map(lambda x: exp(0.1783 * v_w['ms'][x]), args["wind_force"]))
+args["k_w_kmh"] = list(map(lambda x: exp(0.1783 * v_w['kmh'][x]), args["wind_force"]))
 args["r1"] = random.random()
 args["r2"] = random.random()
 
 if __name__ == '__main__':
     mhdp = MHDP(args["pop_size"], args)
 
-    final_pop = mhdp.run_mhdp()
+    best_solutions = mhdp.run_mhdp()
+    print(f"Number of feasible solutions: {len(best_solutions)}")
+    for i, s in enumerate(best_solutions):
+        print(f"Solution {i+1}:")
+        print(s)
+        print(mhdp.compute_fitness(s))
+        print("\n")
+    

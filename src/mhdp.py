@@ -20,35 +20,7 @@ import random
 import math
 import numpy as np
 from numpy.random import multinomial
-
-#def RandIntVec(ListSize : int, ListSumValue : int) -> list(int):
-    #"""
-    #Normal Distribution Construction....It's very flexible and hideous
-    #Assume a +-3 sigma range. 
-    #If one wishes to explore a different range, then changes the LowSigma and HighSigma values
-    #"""
-    #LowSigma    = -3#-3 sigma
-    #HighSigma   = 3#+3 sigma
-    #StepSize    = 1/(float(ListSize) - 1)
-    #ZValues     = [(LowSigma * (1-i*StepSize) +(i*StepSize)*HighSigma) for i in range(int(ListSize))]
-    ##Construction parameters for N(Mean,Variance) - Default is N(0,1)
-    #NormalDistro= list()
-    #for i in range(len(ZValues)):
-        #if i==0:
-            #ERFCVAL = 0.5 * math.erfc(-ZValues[i]/math.sqrt(2))
-            #NormalDistro.append(ERFCVAL)
-        #elif i ==  len(ZValues) - 1:
-            #ERFCVAL = NormalDistro[0]
-            #NormalDistro.append(ERFCVAL)
-        #else:
-            #ERFCVAL1 = 0.5 * math.erfc(-ZValues[i]/math.sqrt(2))
-            #ERFCVAL2 = 0.5 * math.erfc(-ZValues[i-1]/math.sqrt(2))
-            #ERFCVAL = ERFCVAL1 - ERFCVAL2
-            #NormalDistro.append(ERFCVAL)  
-        #Values = multinomial(ListSumValue,NormalDistro,size=1)
-        #OutputValue = Values[0]
-    #return OutputValue
-
+import utils
 
 @dataclass
 class MHDP :
@@ -103,29 +75,31 @@ class MHDP :
         (14) End While;
         '''
         pop_size, args = self.attributes
-
-        i = 0
+        n_fire_points = args["N"]
 
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_ms')) # v_si # k_ are just values of different areas
         args["lower_bound_points"] = 2*fire_spread_speeds/args.get('v_m') # Li > 2vsi/vm
 
-        
         ui = np.array(args.get('upper_bound_points')).astype(int)
         li = np.array(args.get('lower_bound_points')).astype(int)
 
         q0 = []
-        while i <= pop_size :
-            candidate = []
+        i = 0
+        while i < pop_size :
             flag = False
             while not flag :
-                candidate.append(random.randint(li[i], ui[i])) # generate xi within Li and Ui and compose Xi
+                candidate = []
+                for j in range(n_fire_points):
+                    candidate.append(random.randint(li[j], ui[j])) # generate xi within Li and Ui and compose Xi
+
                 if np.sum(candidate) >= args.get('K') and np.sum(candidate) <= args.get('M') :
-                    q0 += candidate #Q(0) = Q(0) ∪ {Xi};
+                    q0.append(candidate) #Q(0) = Q(0) ∪ {Xi};
                     flag = True
                 else : 
                     flag = False
             i += 1
+
         return q0
 
     def compute_fitness(self, candidate: list[int]) -> list[tuple]:
@@ -145,18 +119,28 @@ class MHDP :
         fitness = []
         fire_points_distances = np.array(args.get('distances')) # d0_i
         vehicles_speeds = np.array(args.get('vehicles_speeds')) # v0_i
-        arrival_times = fire_points_distances/vehicles_speeds # tA_i
+        arrival_times = fire_points_distances[0][1:]/vehicles_speeds # tA_i
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
-        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
+        fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w_kmh')) # v_si # k_ are just values of different areas
         
-        f1 = 0
-        for c in candidate:
+        # (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i])
+        #             h
+        
+        fire_spread_speeds = utils.from_mmin_to_kmh(fire_spread_speeds)
+
+        f1 = []
+        f2 = 0
+        for i, c in enumerate(candidate):
             # since v_m is considered to be the same across all fire engines \sum_{m=1}^m z_0i^*v_m reduces to x_i * v_m
-            extinguishing_times = (fire_spread_speeds * arrival_times)/(c * args.get('v_m') - 2* fire_spread_speeds) # t_Ei
-            f1 += extinguishing_times # objective of minimizing the extinguishing time of fires
+            if c < 0:
+                extinguishing_time = np.inf
+            else:
+                extinguishing_time = (fire_spread_speeds[i] * arrival_times[i])/(c * args.get('v_m') - 2*fire_spread_speeds[i]) # t_Ei
+           
+            f1.append(extinguishing_time) # objective of minimizing the extinguishing time of fires
             f2 += c
-            fitness.append((f1,f2))
-        return fitness
+
+        return (np.sum(f1), f2)
 
 
     def check_constraint(self, candidate):
@@ -174,11 +158,13 @@ class MHDP :
         pop_size, args = self.attributes
 
         constr5 = (np.sum(candidate) >= args.get('K') and np.sum(candidate) <= args.get('M')) 
-        ui = np.array(args.get('upper_bound_points'))
-        li = np.array(args.get('lower_bound_points'))
+        ui = np.array(args.get('upper_bound_points')).astype(int)
+        li = np.array(args.get('lower_bound_points')).astype(int)
         bools = []
         for idx, c in enumerate(candidate) :
             bools.append(c >= li[idx] and c<=ui[idx])
+
+        constr6 = False
         if np.all(bools) :
             constr6 = True
         
@@ -189,7 +175,7 @@ class MHDP :
         
         checklist = []
         for c in loc :
-            checklist.append(self.check_constraint(c, args))
+            checklist.append(self.check_constraint(c))
         return np.all(checklist)
         
     # point C section III, calculating fitness values and screening pareto solutions
@@ -217,52 +203,52 @@ class MHDP :
 
         new_fitnesses = []
         for idx, candidate in enumerate(new_pop):
-            new_fitnesses.append((idx, self.compute_fitness(candidate, args))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
+            new_fitnesses.append((idx, self.compute_fitness(candidate))) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
         
         old_fitnesses = []
         for idx, candidate in enumerate(old_pop):
-            old_fitnesses.append((idx, self.compute_fitness(candidate, args)))
+            old_fitnesses.append((idx, self.compute_fitness(candidate)))
 
-        pbest = []
-        for i in range(len(pop_size)):
+        pbests = []
+        for i in range(pop_size):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
-                pbest.append(new_pop[i])
+            if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+                pbests.append(new_pop[i])
                 old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
                 old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+            elif self.check_constraint(new_pop[i]) and new_fitnesses[i][1] == old_fitnesses[i][1] :
                 rand = random.randint(0,1)
                 if rand:
-                    pbest.append(new_pop[i])
+                    pbests.append(new_pop[i])
                 else:
-                    pbest.append(old_pop[i])
+                    pbests.append(old_pop[i])
             else :
-                pbest.append(old_pop[i])
+                pbests.append(old_pop[i])
 
-        for i in range(len(pop_size)):
-            ## dominance here is defined based on objective values
-            ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] > old_fitnesses[i][1]:
-                pbest.append(new_pop[i])
-                old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
-                old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
+        # for i in range(pop_size):
+        #     ## dominance here is defined based on objective values
+        #     ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
+        #     if self.check_constraint(new_pop[i]) and new_fitnesses[i][1] > old_fitnesses[i][1]:
+        #         pbests.append(new_pop[i])
+        #         old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
+        #         old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
 
-            elif self.check_all_candidates(new_pop, args) and new_fitnesses[i][1] == old_fitnesses[i][1] :
-                rand = random.randint(0,1)
-                if rand:
-                    pbest.append(new_pop[i])
-                else:
-                    pbest.append(old_pop[i])
-            else :
-                pbest.append(old_pop[i])
+        #     elif self.check_constraint(new_pop[i]) and new_fitnesses[i][1] == old_fitnesses[i][1] :
+        #         rand = random.randint(0,1)
+        #         if rand:
+        #             pbests.append(new_pop[i])
+        #         else:
+        #             pbests.append(old_pop[i])
+        #     else :
+        #         pbests.append(old_pop[i])
   
-        rand = random.randint(pop_size)
+        rand = random.randint(0, pop_size-1)
         ## rather than defining a new archive, the old archive is updated with dominant solutions
         gbest = old_archive[rand]
 
-        return pbest, gbest
+        return pbests, gbest
         
     def mutation_adjustment(self, pop:list[list[int]]) -> list[list[int]]:
         '''
@@ -283,8 +269,8 @@ class MHDP :
         
         adjusted_pop = []
         
-        ui = np.array(args.get('upper_bound_points'))
-        li = np.array(args.get('lower_bound_points'))
+        ui = np.array(args.get('upper_bound_points')).astype(int)
+        li = np.array(args.get('lower_bound_points')).astype(int)
         
         for individual in pop:
             for i, gene in enumerate(individual):
@@ -369,29 +355,38 @@ class MHDP :
         
         return crossed_pop
 
+    def filter_feasible(self, pop):
+        feasible_sol = []
+        for sol in pop:
+            if self.check_constraint(sol):
+                feasible_sol.append(sol)
+        
+        return feasible_sol
+
     def run_mhdp(self):
         pop_size, args = self.attributes
         
+        print("[*] Generating initial population")
         pop = self.init_population()
         
+        print("[*] Evaluating initial population")
         pbests, gbest = self.evaluation(pop, pop, pop)
-
+        
+        print("[*] Mutation - Crossover loop")
         for i in range(args["gmax"]):
+            print(f"{i}/{args['gmax']}\r", end='')
+
             # mutation
             mutated_pop = self.mutation(pop, pbests, gbest)
             pbests, gbest = self.evaluation(pop, mutated_pop, pbests)
+
             # crossover
             crossed_pop = self.crossover(mutated_pop)
             pbests, gbest = self.evaluation(mutated_pop, crossed_pop, pbests)
             
             pop = crossed_pop
         
-        return pbests, gbest
-
-
-
-
-
+        return self.filter_feasible(pbests)
 
         
                 
