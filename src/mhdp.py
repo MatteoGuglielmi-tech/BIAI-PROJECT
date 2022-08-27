@@ -327,12 +327,9 @@ class MHDP :
         Xi(g+1) = Xi(g+1) + Φ[r1(Gbest - Xi(g)) + r2(Pbest - Xi(g)) + F(Xj(g) - Xk(g))]
         '''
         pop_size, args = self.attributes
+        f = args.get('F')
         
         mutated_pop = []
-
-        r1 = args.get('r1')
-        r2 = args.get('r2')
-        f = args.get('F')
 
         if not 0 < f < 2:
             raise ValueError('the DE scaling factor should be in range (0, 2)')
@@ -347,6 +344,9 @@ class MHDP :
         
             xj = pop[j]
             xk = pop[k]
+
+            r1 = random.random() 
+            r2 = random.random()
 
             pbest = pbests[i]
 
@@ -419,7 +419,8 @@ class MHDP :
         pbests, gbest = self.evaluation(pop, pop)
         
         print("[*] Mutation - Crossover loop")
-        for i in range(args["gmax"]):
+        i = 0
+        while i < args['gmax']:
             print(f"{i+1}/{args['gmax']}\r", end='')
 
             # mutation
@@ -431,7 +432,10 @@ class MHDP :
             pbests, gbest = self.evaluation(pbests, crossed_pop)
             
             pop = crossed_pop
+
+            i = i+1
         
+        print("")
         feasible_sol = self.filter_feasible(self.archive)
 
         return feasible_sol

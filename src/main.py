@@ -108,11 +108,11 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 :
         random.seed(int(sys.argv[1]))
     
-    args["r1"] = random.random()
-    args["r2"] = random.random()
+    # args["r1"] = random.random()
+    # args["r2"] = random.random()
 
-    print(f"r1: {args['r1']}")
-    print(f"r2: {args['r2']}")
+    # print(f"r1: {args['r1']}")
+    # print(f"r2: {args['r2']}")
     
     mhdp = MHDP(args["pop_size"], args)
 
