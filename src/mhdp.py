@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import random
+from re import S
 import numpy as np
 import utils
 
@@ -149,7 +150,7 @@ class MHDP :
             bools.append(c >= li[idx] and c <= ui[idx])
 
         constr6 = False
-        if np.all(bools) :
+        if np.all(bools):
             constr6 = True
         
         return (constr5 and constr6)
@@ -216,7 +217,7 @@ class MHDP :
             frontiers.append(front)
         
         return frontiers, ranks        
-        
+    
     # point C section III, calculating fitness values and screening pareto solutions
     def evaluation(self, old_pop: list[list[int]], new_pop: list[list[int]]):
         '''
@@ -264,21 +265,28 @@ class MHDP :
                 pbests.append(old_pop[i])
 
         pareto_frontiers, pareto_ranks = self.fast_non_dominated_sort(pbests)
-
         for idx in pareto_frontiers[0]:
-            self.archive.append(pbests[idx])    # merge archive and best pareto solutions
+            if self.check_constraint(pbests[idx]):
+                self.archive.append(pbests[idx])    # merge archive and best pareto solutions
         
         # screen new archive
         pareto_frontiers, pareto_ranks = self.fast_non_dominated_sort(self.archive)
-        self.archive = [self.archive[i] for i in pareto_frontiers[0]]
+        new_arch = []
+        for i in pareto_frontiers[0]:
+            if self.check_constraint(self.archive[i]) and self.archive[i] not in new_arch:
+                new_arch.append(self.archive[i])
+        self.archive = new_arch
         
         # select gbest
-        rand = random.randint(0, len(self.archive)-1)
-        gbest = self.archive[rand]
+        if len(self.archive) > 0:
+            rand = random.randint(0, len(self.archive)-1)
+            gbest = self.archive[rand]
+        else:
+            gbest = pbests[0]
 
         return pbests, gbest
         
-    def mutation_adjustment(self, pop:list[list[int]]) -> list[list[int]]:
+    def adjustment(self, pop:list[list[int]]) -> list[list[int]]:
         '''
         PSEUDCODE : 
         Input: Q(g)
@@ -301,12 +309,18 @@ class MHDP :
         li = np.array(args.get('lower_bound_points')).astype(int)
         
         for individual in pop:
+            # constraint 6
             for i, gene in enumerate(individual):
                 if gene < li[i]:
                     individual[i] = li[i]
                 if gene > ui[i]:
                     individual[i] = ui[i]
             
+            # constraint 5
+            while not self.check_constraint(individual):
+                max_idx = np.argmax(individual)
+                individual[max_idx] = individual[max_idx] - 1
+        
             adjusted_pop.append(individual)
         
         return adjusted_pop
@@ -345,7 +359,7 @@ class MHDP :
 
             mutated_pop.append(mutated_individual)
 
-        mutated_pop = self.mutation_adjustment(mutated_pop)
+        mutated_pop = self.adjustment(mutated_pop)
         
         return mutated_pop
     
@@ -407,15 +421,15 @@ class MHDP :
         
         print("[*] Mutation - Crossover loop")
         for i in range(args["gmax"]):
-            print(f"{i}/{args['gmax']}\r", end='')
+            print(f"{i+1}/{args['gmax']}\r", end='')
 
             # mutation
             mutated_pop = self.mutation(pop, pbests, gbest)
             pbests, gbest = self.evaluation(pop, mutated_pop)
-
+            
             # crossover
             crossed_pop = self.crossover(mutated_pop)
-            pbests, gbest = self.evaluation(mutated_pop, crossed_pop)
+            pbests, gbest = self.evaluation(pop, crossed_pop)
             
             pop = crossed_pop
         

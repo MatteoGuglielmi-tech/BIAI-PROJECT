@@ -1,4 +1,5 @@
 from math import exp
+import sys
 import random
 from mhdp import MHDP
 import utils
@@ -7,7 +8,7 @@ args = {}
 
 # Evolution parameters
 args["pop_size"] = 50   # population size
-args["F"] = 1.5 # scaling factor of DE
+args["F"] = 1.9 # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
 args["gmax"] = 100  # n_iterations
 
@@ -29,9 +30,9 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = [10, 10, 10, 10, 10, 10, 10]#args["N"]*[args["M"]/args["N"]] 
+args["upper_bound_points"] = [13, 13, 13, 13, 13, 13, 13] #args["N"]*[args["M"]/args["N"]] 
 
-# Terrain parameters
+# Terrain and weather parameters
 # factors related with the terrain for the spread model
 args["a"] = 0.053
 args["b"] = 0.048
@@ -101,10 +102,16 @@ v_w = { # wind speeds per wind force level m/s and kmh
 }
 
 args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
-args["r1"] = random.random()
-args["r2"] = random.random()
 
 if __name__ == '__main__':
+
+    if len(sys.argv) > 1 :
+        random.seed(int(sys.argv[1]))
+    
+
+    args["r1"] = random.random()
+    args["r2"] = random.random()
+    
     mhdp = MHDP(args["pop_size"], args)
 
     best_solutions = mhdp.run_mhdp()
