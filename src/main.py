@@ -8,7 +8,7 @@ args = {}
 
 # Evolution parameters
 args["pop_size"] = 50   # population size
-args["F"] = 1.9 # scaling factor of DE
+args["F"] = 1.5 # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
 args["gmax"] = 100  # n_iterations
 
@@ -30,7 +30,7 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = [13, 13, 13, 13, 13, 13, 13] #args["N"]*[args["M"]/args["N"]] 
+args["upper_bound_points"] = [10, 10, 10, 10, 10, 10, 10]
 
 # Terrain and weather parameters
 # factors related with the terrain for the spread model
@@ -108,9 +108,11 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 :
         random.seed(int(sys.argv[1]))
     
-
     args["r1"] = random.random()
     args["r2"] = random.random()
+
+    print(f"r1: {args['r1']}")
+    print(f"r2: {args['r2']}")
     
     mhdp = MHDP(args["pop_size"], args)
 
@@ -127,7 +129,8 @@ if __name__ == '__main__':
     for i, s in enumerate(best_solutions):
         fitnesses = mhdp.compute_fitness(s)
         print(f"Solution {i+1}: {s}")
-        print(f"\t(f1, f2): {fitnesses}\n")
+        print(f"\tf1: {fitnesses[0]:.2f} h")
+        print(f"\tf2: {fitnesses[1]} \n")
 
         f1_fitnesses.append(fitnesses[0])
         f2_fitnesses.append(fitnesses[1])

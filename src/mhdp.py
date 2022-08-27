@@ -243,7 +243,7 @@ class MHDP :
 
         new_fitnesses = []
         for candidate in new_pop:
-            new_fitnesses.append(self.compute_fitness(candidate)) #list of all candidates fitnesses : [(1, (f11, f21)), (2, (f12, f21)), ... , (N, (f1N, f2N))]
+            new_fitnesses.append(self.compute_fitness(candidate)) #list of all candidates fitnesses : [(f11, f21), (f12, f21), ... , (N, (f1N, f2N))]
         
         old_fitnesses = []
         for candidate in old_pop:
@@ -253,15 +253,15 @@ class MHDP :
         for i in range(pop_size):
             ## dominance here is defined based on objective values
             ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-            if self.check_constraint(new_pop[i]) and new_fitnesses[i] < old_fitnesses[i]:
+            if self.check_constraint(new_pop[i]) and self.is_dominant(new_fitnesses[i], old_fitnesses[i]):
                 pbests.append(new_pop[i])
-            elif self.check_constraint(new_pop[i]) and new_fitnesses[i] == old_fitnesses[i] :
+            elif self.check_constraint(new_pop[i]) and new_fitnesses[i] == old_fitnesses[i]:
                 rand = random.randint(0,1)
                 if rand:
                     pbests.append(new_pop[i])
                 else:
                     pbests.append(old_pop[i])
-            else :
+            else:
                 pbests.append(old_pop[i])
 
         pareto_frontiers, pareto_ranks = self.fast_non_dominated_sort(pbests)
@@ -278,12 +278,9 @@ class MHDP :
         self.archive = new_arch
         
         # select gbest
-        if len(self.archive) > 0:
-            rand = random.randint(0, len(self.archive)-1)
-            gbest = self.archive[rand]
-        else:
-            gbest = pbests[0]
-
+        rand = random.randint(0, len(self.archive)-1)
+        gbest = self.archive[rand]
+        
         return pbests, gbest
         
     def adjustment(self, pop:list[list[int]]) -> list[list[int]]:
@@ -399,6 +396,8 @@ class MHDP :
                     individual[i] = xk[i]
             
             crossed_pop.append(individual)
+
+        crossed_pop = self.adjustment(crossed_pop)
         
         return crossed_pop
 
@@ -425,11 +424,11 @@ class MHDP :
 
             # mutation
             mutated_pop = self.mutation(pop, pbests, gbest)
-            pbests, gbest = self.evaluation(pop, mutated_pop)
+            pbests, gbest = self.evaluation(pbests, mutated_pop)
             
             # crossover
             crossed_pop = self.crossover(mutated_pop)
-            pbests, gbest = self.evaluation(pop, crossed_pop)
+            pbests, gbest = self.evaluation(pbests, crossed_pop)
             
             pop = crossed_pop
         
