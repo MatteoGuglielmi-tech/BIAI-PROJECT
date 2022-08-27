@@ -1,4 +1,3 @@
-import inspyred
 from math import exp
 import random
 from mhdp import MHDP
@@ -110,6 +109,10 @@ if __name__ == '__main__':
 
     best_solutions = mhdp.run_mhdp()
     print(f"Number of feasible solutions: {len(best_solutions)}")
+
+    if len(best_solutions) == 0:
+        import sys
+        sys.exit(0)
 
     f1_fitnesses = []
     f2_fitnesses = []

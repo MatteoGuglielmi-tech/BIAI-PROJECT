@@ -1,25 +1,6 @@
-## calling method
-'''
-# Run PSO
-    args["fig_title"] = "PSO"
-    best_individual, best_fitness, final_pop = pso.run_pso(rng,num_vars=num_vars,
-                                                display=display,use_log_scale=True,
-                                                **args)
-    print("Best PSO fitness:", best_fitness)
-'''
-
-import poplib
-from webbrowser import get
-from pylab import *
-import plot_utils
-from inspyred import ec, benchmarks
-from inspyred.ec.observers import *
-import matplotlib
 from dataclasses import dataclass
 import random
-import math
 import numpy as np
-from numpy.random import multinomial
 import utils
 
 @dataclass
@@ -74,6 +55,8 @@ class MHDP :
             (13) i + +;
         (14) End While;
         '''
+        self.archive = []
+
         pop_size, args = self.attributes
         n_fire_points = args["N"]
 
@@ -171,16 +154,71 @@ class MHDP :
         
         return (constr5 and constr6)
 
-    def check_all_candidates(self, loc : list[list[int]]) -> bool :
+    def check_all_candidates(self, loc: list[list[int]]) -> bool :
         pop_size, args = self.attributes
         
         checklist = []
         for c in loc :
             checklist.append(self.check_constraint(c))
         return np.all(checklist)
+
+    def is_dominant(self, item1, item2):    # modified https://github.com/aarongarrett/inspyred/blob/master/inspyred/ec/emo.py#L92
+        if len(item1) != len(item2):
+            raise NotImplementedError
+        else:
+            not_worse = True
+            strictly_better = False
+            for x, y in zip(item1, item2):
+                if y < x:   # if item2 < item1 in one objective => item1 is worse on that objective => not dominant
+                    not_worse = False
+                elif x < y: # if item1 < item2 in one objective => item1 is better than item2 on at least one objective
+                    strictly_better = True
+            return not_worse and strictly_better    # not worse on all objectives and strictly better on at least one objective => item1 is dominant
+
+    def fast_non_dominated_sort(self, pop: list[list[int]]):
+        pop_fitnesses = []
+        for candidate in pop:
+            pop_fitnesses.append(self.compute_fitness(candidate))
+
+        frontiers = []
+        ranks = [0]*len(pop_fitnesses)
+        
+        front = []
+        s = [[] for i in range(len(pop_fitnesses))] # dominated solutions
+        n = [0]*len(pop_fitnesses)  # domination counter
+
+        for i in range(len(pop_fitnesses)):
+            n[i] = 0  
+            for j in range(len(pop_fitnesses)):
+                if i != j:
+                    if self.is_dominant(pop_fitnesses[i], pop_fitnesses[j]):
+                        s[i].append(j)
+                    elif self.is_dominant(pop_fitnesses[j], pop_fitnesses[i]):
+                        n[i] = n[i] + 1
+            
+            if n[i] == 0:
+                ranks[i] = 1
+                front.append(i)
+
+        frontiers.append(front)
+
+        i = 1   # front counter
+        while front != []:
+            Q_front = []  # next front
+            for p in front:
+                for q in s[p]:
+                    n[q] = n[q] - 1
+                    if n[q] == 0:
+                        ranks[q] = i + 1
+                        Q_front.append(q)
+            i = i + 1
+            front = Q_front
+            frontiers.append(front)
+        
+        return frontiers, ranks        
         
     # point C section III, calculating fitness values and screening pareto solutions
-    def evaluation(self, old_pop:list[list[int]], new_pop:list[list[int]], old_archive:list[list[int]]):
+    def evaluation(self, old_pop: list[list[int]], new_pop: list[list[int]]):
         '''
         PSEUDCODE : 
         Input: Q(g - 1), Q(g)
@@ -225,26 +263,18 @@ class MHDP :
             else :
                 pbests.append(old_pop[i])
 
-        # for i in range(pop_size):
-        #     ## dominance here is defined based on objective values
-        #     ## Solutions are selected by comparing their every objective to ensure that they are Pareto optimal solutions.
-        #     if self.check_constraint(new_pop[i]) and new_fitnesses[i] < old_fitnesses[i]:
-        #         pbests.append(new_pop[i])
-        #         old_archive.pop(i) ## popping dominated solution because they have lower fitness values than individual in the current pop
-        #         old_archive.insert(i, new_pop[i]) ## inserting new individual in the archive of best solutions
+        pareto_frontiers, pareto_ranks = self.fast_non_dominated_sort(pbests)
 
-        #     elif self.check_constraint(new_pop[i]) and new_fitnesses[i] == old_fitnesses[i] :
-        #         rand = random.randint(0,1)
-        #         if rand:
-        #             pbests.append(new_pop[i])
-        #         else:
-        #             pbests.append(old_pop[i])
-        #     else :
-        #         pbests.append(old_pop[i])
-  
-        rand = random.randint(0, pop_size-1)
-        ## rather than defining a new archive, the old archive is updated with dominant solutions
-        gbest = old_archive[rand]
+        for idx in pareto_frontiers[0]:
+            self.archive.append(pbests[idx])    # merge archive and best pareto solutions
+        
+        # screen new archive
+        pareto_frontiers, pareto_ranks = self.fast_non_dominated_sort(self.archive)
+        self.archive = [self.archive[i] for i in pareto_frontiers[0]]
+        
+        # select gbest
+        rand = random.randint(0, len(self.archive)-1)
+        gbest = self.archive[rand]
 
         return pbests, gbest
         
@@ -373,7 +403,7 @@ class MHDP :
         pop = self.init_population()
         
         print("[*] Evaluating initial population")
-        pbests, gbest = self.evaluation(pop, pop, pop)
+        pbests, gbest = self.evaluation(pop, pop)
         
         print("[*] Mutation - Crossover loop")
         for i in range(args["gmax"]):
@@ -381,15 +411,15 @@ class MHDP :
 
             # mutation
             mutated_pop = self.mutation(pop, pbests, gbest)
-            pbests, gbest = self.evaluation(pop, mutated_pop, pbests)
+            pbests, gbest = self.evaluation(pop, mutated_pop)
 
             # crossover
             crossed_pop = self.crossover(mutated_pop)
-            pbests, gbest = self.evaluation(pop, crossed_pop, pbests)
+            pbests, gbest = self.evaluation(mutated_pop, crossed_pop)
             
             pop = crossed_pop
         
-        feasible_sol = self.filter_feasible(pbests)
+        feasible_sol = self.filter_feasible(self.archive)
 
         return feasible_sol
 
