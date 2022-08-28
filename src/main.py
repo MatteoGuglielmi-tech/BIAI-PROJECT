@@ -1,3 +1,4 @@
+from ast import arg
 from math import exp
 import sys
 import random
@@ -11,6 +12,7 @@ args["pop_size"] = 50   # population size
 args["F"] = 1.5 # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
 args["gmax"] = 100  # n_iterations
+args["n_runs"] = 4  # number of runs
 
 # Vehicles parameters
 args["K"] = 29  # Lower bound of the total number of vehicles required for forest fire emergency scheduling
@@ -30,7 +32,7 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = [10, 10, 10, 10, 10, 10, 10]
+args["upper_bound_points"] = [9, 9, 9, 9, 9, 9, 9]
 
 # Terrain and weather parameters
 # factors related with the terrain for the spread model
@@ -103,17 +105,7 @@ v_w = { # wind speeds per wind force level m/s and kmh
 
 args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
 
-if __name__ == '__main__':
-
-    if len(sys.argv) > 1 :
-        random.seed(int(sys.argv[1]))
-    
-    # args["r1"] = random.random()
-    # args["r2"] = random.random()
-
-    # print(f"r1: {args['r1']}")
-    # print(f"r2: {args['r2']}")
-    
+def single_run():
     mhdp = MHDP(args["pop_size"], args)
 
     best_solutions = mhdp.run_mhdp()
@@ -134,5 +126,25 @@ if __name__ == '__main__':
 
         f1_fitnesses.append(fitnesses[0])
         f2_fitnesses.append(fitnesses[1])
+    
+    print("\n\n")
+    
+    return best_solutions, f1_fitnesses, f2_fitnesses
 
+if __name__ == '__main__':
+
+    if len(sys.argv) > 1 :
+        random.seed(int(sys.argv[1]))
+    
+    runs = args["n_runs"]   
+
+    f1_fitnesses = []
+    f2_fitnesses = []
+
+    for run in range(runs):
+        print(f"=========== Run {run+1}/{runs} ===========")
+        best_solutions, f1, f2 = single_run()
+        f1_fitnesses.append(f1)
+        f2_fitnesses.append(f2)
+    
     utils.plot_pareto(f1_fitnesses, f2_fitnesses)

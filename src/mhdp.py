@@ -334,6 +334,9 @@ class MHDP :
         if not 0 < f < 2:
             raise ValueError('the DE scaling factor should be in range (0, 2)')
 
+        r1 = random.random() 
+        r2 = random.random()
+
         for i, individual in enumerate(pop):
             while True:
                 j = random.randint(0, len(pop)-1)
@@ -344,9 +347,6 @@ class MHDP :
         
             xj = pop[j]
             xk = pop[k]
-
-            r1 = random.random() 
-            r2 = random.random()
 
             pbest = pbests[i]
 
