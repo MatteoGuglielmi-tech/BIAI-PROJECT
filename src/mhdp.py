@@ -90,7 +90,7 @@ class MHDP :
 
         return q0
 
-    def compute_fitness(self, candidate: list[int]) -> list[tuple]:
+    def compute_fitness(self, candidate: list[int]) -> tuple:
         '''Compute fitness of a candidate (possible solution/individual)
             Params:
             ------
@@ -127,7 +127,6 @@ class MHDP :
         
         return (f1, f2)
 
-
     def check_constraint(self, candidate):
         '''Check whether constraints 5 and 6 are respected
             Params:
@@ -155,7 +154,7 @@ class MHDP :
         
         return (constr5 and constr6)
 
-    def check_all_candidates(self, loc: list[list[int]]) -> bool :
+    def check_all_candidates(self, loc: list[list[int]]) -> bool:
         pop_size, args = self.attributes
         
         checklist = []
@@ -217,8 +216,8 @@ class MHDP :
             frontiers.append(front)
         
         return frontiers, ranks        
-    
-    # point C section III, calculating fitness values and screening pareto solutions
+
+        # point C section III, calculating fitness values and screening pareto solutions
     def evaluation(self, old_pop: list[list[int]], new_pop: list[list[int]]):
         '''
         PSEUDCODE : 
@@ -334,9 +333,6 @@ class MHDP :
         if not 0 < f < 2:
             raise ValueError('the DE scaling factor should be in range (0, 2)')
 
-        r1 = random.random() 
-        r2 = random.random()
-
         for i, individual in enumerate(pop):
             while True:
                 j = random.randint(0, len(pop)-1)
@@ -347,6 +343,9 @@ class MHDP :
         
             xj = pop[j]
             xk = pop[k]
+
+            r1 = random.random() 
+            r2 = random.random()
 
             pbest = pbests[i]
 
@@ -439,22 +438,3 @@ class MHDP :
         feasible_sol = self.filter_feasible(self.archive)
 
         return feasible_sol
-
-        
-                
-
-
-
-
-
-
-
-            
-
-
-
-
-
-
-
-
