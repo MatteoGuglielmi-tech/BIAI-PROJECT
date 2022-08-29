@@ -2,6 +2,8 @@ from ast import arg
 from math import exp
 import sys
 import random
+
+from pyparsing import util
 from mhdp import MHDP
 import utils
 
@@ -9,9 +11,9 @@ args = {}
 
 # Evolution parameters
 args["pop_size"] = 100   # population size
-args["F"] = 1.5 # scaling factor of DE
+args["F"] = 1.5  # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
-args["gmax"] = 50  # n_iterations
+args["gmax"] = 100  # n_iterations
 args["n_runs"] = 4  # number of runs
 
 # Vehicles parameters
@@ -41,7 +43,7 @@ args["b"] = 0.048
 args["c"] = 0.275
 args["temperature"] = [25, 23, 22, 26, 24, 23, 22]
 args["wind_force"] = [2, 1, 1, 2, 2, 2, 1]
-fuel_types = ["Meadow", "Meadow", "Meadow", "Meadow", "Meadow", "Meadow", "Meadow"]
+fuel_types = ["Meadow" for _ in range(args["N"])]
 slopes = [10, 2, 5, 15, 13, 8, 8]
 
 k_s_map = {
@@ -50,6 +52,7 @@ k_s_map = {
     "Coniferous forest": 0.4
 }
 args["k_s"] = list(map(lambda x: k_s_map[x], fuel_types))
+
 
 def k_phi_map(slope):
     if slope <= -38:
@@ -87,8 +90,9 @@ def k_phi_map(slope):
     else:
         return 17.50
 
+
 args["k_phi"] = list(map(lambda x: k_phi_map(x), slopes))
-v_w = { # wind speeds per wind force level m/s and kmh
+v_w = {  # wind speeds per wind force level m/s and kmh
     1: 2, 
     2: 3.6, 
     3: 5.4, 
@@ -104,6 +108,7 @@ v_w = { # wind speeds per wind force level m/s and kmh
 }
 
 args["k_w"] = list(map(lambda x: exp(0.1783 * v_w[x]), args["wind_force"]))
+
 
 def single_run():
     mhdp = MHDP(args["pop_size"], args)
@@ -146,5 +151,6 @@ if __name__ == '__main__':
         best_solutions, f1, f2 = single_run()
         f1_fitnesses.append(f1)
         f2_fitnesses.append(f2)
+        # utils.plot_pareto(f1_fitnesses, f2_fitnesses)
     
     utils.plot_pareto(f1_fitnesses, f2_fitnesses)
