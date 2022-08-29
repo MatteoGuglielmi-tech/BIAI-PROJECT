@@ -215,9 +215,34 @@ class MHDP :
             front = Q_front
             frontiers.append(front)
         
-        return frontiers, ranks        
+        return frontiers, ranks
+    
+    # fron -> list of individuals, not indices
+    def crowding_distance(self, front: list[list[int]]):
+        distances = []
+        for i in range(len(front)):
+            distances[i] = 0
 
-        # point C section III, calculating fitness values and screening pareto solutions
+        fitnesses = []
+        for individual in front:
+            fitnesses.append(self.compute_fitness(individual))
+
+        # for each objective f1, f2
+        for m in range(2):
+            # sort front using objective
+            fitness_m = [i[m] for i in fitnesses]
+            sorted_front = [x for _, x in sorted(zip(fitness_m, front))]
+            distances = [x for _, x in sorted(zip(fitness_m, distances))]
+            fitness_m = sorted(fitness_m)
+
+            distances[0] = np.inf
+            distances[-1] = np.inf
+
+            for i in range(1, len(sorted_front)-1):
+                distances[i] = distances[i] + (fitness_m[i+1] - fitness_m[i-1]) / (max(fitness_m) - min(fitness_m))           
+
+
+    # point C section III, calculating fitness values and screening pareto solutions
     def evaluation(self, old_pop: list[list[int]], new_pop: list[list[int]]):
         '''
         PSEUDCODE : 

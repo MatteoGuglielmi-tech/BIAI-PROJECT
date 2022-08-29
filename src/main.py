@@ -8,10 +8,10 @@ import utils
 args = {}
 
 # Evolution parameters
-args["pop_size"] = 50   # population size
+args["pop_size"] = 100   # population size
 args["F"] = 1.5 # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
-args["gmax"] = 100  # n_iterations
+args["gmax"] = 50  # n_iterations
 args["n_runs"] = 4  # number of runs
 
 # Vehicles parameters
@@ -32,7 +32,7 @@ args["distances"] = [
     [66, 48, 42, 52, 64, 65, 0, 63],
     [45, 64, 58, 54, 56, 66, 63, 0]
 ]
-args["upper_bound_points"] = [9, 9, 9, 9, 9, 9, 9]
+args["upper_bound_points"] = [10, 10, 10, 10, 10, 10, 10]
 
 # Terrain and weather parameters
 # factors related with the terrain for the spread model
