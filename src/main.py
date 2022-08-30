@@ -11,7 +11,7 @@ args = {}
 
 # Evolution parameters
 args["pop_size"] = 100   # population size
-args["F"] = 1.5  # scaling factor of DE
+args["F"] = 1.0 # scaling factor of DE
 args["Pc"] = 0.6    # crossover probability
 args["gmax"] = 100  # n_iterations
 args["n_runs"] = 4  # number of runs
