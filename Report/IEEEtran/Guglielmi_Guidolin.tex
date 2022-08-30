@@ -14,15 +14,30 @@
 % to write algorithms in the corpus of the report
 \usepackage{algorithmic}
 
-
 % *** PDF, URL AND HYPERLINK PACKAGES ***
 \usepackage{url}
 
 % correct bad hyndenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+% *** TABLES ***
+\usepackage[para]{threeparttable}
+\usepackage{lipsum} % filler text
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{makecell}
+
+% to use \degree
+\usepackage{gensymb}
+
+% to use \nth 
+\usepackage[super]{nth}
+
+
 
 \begin{document}
+\lipsum[1] % filler text
+
 \title{Dual-Objective Scheduling of Rescue Vehicles to\\
 Distinguish Forest Fires via Differential Evolution\\
 and Particle Swarm Optimization\\
@@ -64,6 +79,7 @@ The focus of our project is the implementation and testing of their approach.
 \input{Chapters/implementation.tex}
 \input{Chapters/results.tex}
 \input{Chapters/conclusion.tex}
+\input{Chapters/appendix.tex}
 \input{Chapters/bibliography.tex}
 \end{document}
 

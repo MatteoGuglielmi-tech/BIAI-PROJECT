@@ -1,2 +1,103 @@
+%spiegazione fitness functions
 \section{Problem Statement}
-Spiegazione fitness functions
+\subsection{Problem Statement}
+In this work, an implementation of an emergency scheduling algorithm to solve a scheduling problem in organizing the deployment of fire engines is proposed. \\
+In particular, the considered scenario focuses on forest fires whose location points may be dislocated in several areas/points even far away from each other.
+As it is possible to imagine, under emergency conditions the time factor is a key aspect to consider. Indeed, when dealing with major disasters, time is an indispensable and primary factor for each decision-maker to contain risks and damages.\\
+
+In the context of this work, the rescue time is considered to be given by the sum of the arrival time of a motorcade to a specific fire point and the extinguishing time needed to put out the flames. Since the first is related just to a matter of distance and velocity, it is reasonable to consider arrival time as a constant if pace and distance are known.
+On the other hand, the extinguishing time is highly related to several fire factors such as type of fuel, wind force, terrain slope, so it requires to be carefully modelled. \\
+
+Fire modelling is not the only concern we have in formulating this scheduling problem since it would result unrealistic to assume infinite amount of resources. Indeed, a multi-objective optimization problem has been devised in order to take into account also the number of resources (fire engines) available in the fire station.
+In light of this, as a result we get an optimal emergency policy such that a certain number of fire engines are dispatched to different fire points to minimize the firefighting time and, at the same time, it tries to minimize the number of vehicle deployed and their usage. 
+
+\subsection{Fire Spread Model}
+In the purposes of this work, a fire spread model associated with natural phenomena, i.e. wind force, initial spread speed, fuel types, temperature and terrain slope is used.\\
+Mathematically, it is defined as follows :
+\begin{equation}
+    v_S = v_0 + k_sk_{\varphi} k_w = v_0 k_s k_{\varphi} e^{0.1783v_w}
+    \label{eq:spread_speed}
+\end{equation}
+where :
+\begin{itemize}
+    \item $v_S$ : fire spread speed
+    \item $v_0$ : initial fire spread speed
+    \item $k_s$ : fuel correction factor
+    \item $k_w$ : wind correction factor 
+    \item $k_{\varphi}$ : terrain slope correction factor 
+\end{itemize}
+Furthermore : 
+\begin{equation}
+    v_0 = aT + bw + c
+    \label{eq:intial_speed}
+\end{equation}
+where :
+\begin{itemize}
+    \item T : fire point internal temperature
+    \item w : wind force
+    \item a, b, c : these are terrain related factors and depends on the actual fire point location
+\end{itemize}
+The reference values for $k_s, k_w, k_{\varphi}$ can be found respectively, in Tables \ref{tab:ks}, \ref{tab:vw}, \ref{tab:kphi}.
+
+\subsection{Mathematical model}
+Considering what has been said before, the dual-objective emergency scheduling optimization model with multi-resource constraints is formulated as follows :
+\begin{equation}
+    \label{eqn:f1}
+    \text{Min   } f_1 = \sum_{i=1}^N t_{E_i}
+\end{equation}
+\begin{equation}
+    \label{eqn:f2}
+    \text{Min   } f_2= \sum_{j=1}^N \sum_{m=1}^M z_{0j}^m
+\end{equation}
+\text{s.t.}
+
+\begin{equation}
+    \label{eqn:constraints}
+    \begin{cases}
+        K \leq \sum_{j=1}^N \sum_{m=1}^M z_{0j}^m \leq M\\
+        L_i \leq \sum_{m=1}^M z_{0i}^m \leq U_i, i=1, \dots, N\\
+        z_{0i}^m \in \{0,1\}, m=1,\dots,M , i=1,\dots, N\\
+    \end{cases}
+\end{equation}
+
+where :
+\begin{itemize}
+    \item K : Lower bound of the total number of vehicles required for forest fire emergency scheduling
+    \item M : Upper bound of the total number of fire engines in the fire emergency scheduling center
+    \item $z_{0i}^m$ : Binary variable ($1$ if the $m-th$ fire engine is sent from point $0$ to $i$; $0$ otherwise)
+    \item $L_i$ : Lower bound of the number of fire engines to the $i-th$ fire point, $i = 1,2,\dots,N$
+    \item $U_i$ : Upper bound of the number of fire engines to the $i-th$ fire point, $i = 1,2,\dots,N$
+\end{itemize}
+% just so separate text
+\mbox{}\\
+
+\subsubsection{Objective $f_1$}
+The objective $f_1$ in (\ref{eqn:f1}) aims to minimize the extinguishing time of fires which is given by the following expression :
+\begin{equation}
+    \label{eqn:tei}
+    t_{E_i} = \dfrac{v_{S_i}\cdot t_{A_i}}{\biggr(\sum_{m=1}^M z_{0i}^m \cdot v_m - 2v_{S_i} \biggl)}
+\end{equation}
+where:
+\begin{itemize}
+    \item $t_{A_i}$ is the arrival time of vehicles to the $i$th fire point and it is defined as:
+        \begin{equation}
+        t_{A_i}=\dfrac{d_{0i}}{v_{0i}}, i=1,2, \dots, N
+    \end{equation}
+        where $d_{0i}$ and $v_{0i}$ are the distance between point $0$ and point $i$ and the average speed of the motorcade from point $0$ to $i$, respectively.
+\end{itemize}
+
+Thus, composing (\ref{eqn:f1}) and (\ref{eqn:tei}) we have:
+\begin{equation}
+    f_1 = \sum_{i=1}^N \dfrac{v_{S_i}\cdot t_{A_i}}{\biggr(\sum_{m=1}^M z_{0i}^m \cdot v_m - 2v_{S_i} \biggl)}
+\end{equation}
+
+\subsubsection{Objective $f_2$}
+Objective $f_2$ in (\ref{eqn:f2}) aims to minimize the number of deployed vehicles.\\
+In (\ref{eqn:constraints}), the first constraint ensures that the number of motorcades sent to a specific fire point is at most $M$ and, at the same time, ensures that some fire engines are sent to each fire point such that fires are extinguished (at least $K$).\\
+The second constraint in (\ref{eqn:constraints}) limits the number of vehicles sent to the $i$-th fire point and, finally, the last constraint defines that the $z$ variables can only assume binary values.\\
+It is worth to mention that the \textbf{two objective are in conflict with each other}, that's because conceptually, the first objective would require a higher number of motorcades in order to faster extinguishing the fire but this is in contrast with what we are trying to do with $f_2$.\\
+Based on this, the formulated model turns out to be highly non-linear since :
+\begin{itemize}
+    \item[a.] Equation \ref{eqn:f1} is a non-linear function and (\ref{eqn:f2}) indicates an integer programming problem
+    \item[b.] fire points are multiple so as this number increases, the emergency scheduling becomes more complex.
+\end{itemize}
