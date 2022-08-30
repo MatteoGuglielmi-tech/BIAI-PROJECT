@@ -90,8 +90,8 @@ Thus, composing (\ref{eqn:f1}) and (\ref{eqn:tei}) we have:
 
 \subsubsection{Objective $f_2$}
 Objective $f_2$ in (\ref{eqn:f2}) aims to minimize the number of deployed vehicles.\\
-In (\ref{eqn:constraints}), the first constraint ensures that the number of motorcades sent to a specific fire point is at most $M$ and, at the same time, ensures that some fire engines are sent to each fire point such that fires are extinguished (at least $K$).\\
-The second constraint in (\ref{eqn:constraints}) limits the number of vehicles sent to the $i$-th fire point and, finally, the last constraint defines that the $z$ variables can only assume binary values.\\
+The (\ref{eqn:constraints_a}) constraint ensures that the number of motorcades sent to a specific fire point is at most $M$ and, at the same time, ensures that some fire engines are sent to each fire point such that fires are extinguished (at least $K$).\\
+The second constraint (\ref{eqn:constraints_b}) limits the number of vehicles sent to the $i$-th fire point and, finally, the last constraint defines that the $z$ variables can only assume binary values.\\
 It is worth to mention that the \textbf{two objective are in conflict with each other}, that's because conceptually, the first objective would require a higher number of motorcades in order to faster extinguishing the fire but this is in contrast with what we are trying to do with $f_2$.\\
 Based on this, the formulated model turns out to be highly non-linear since :
 \begin{itemize}
