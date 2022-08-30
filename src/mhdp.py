@@ -59,7 +59,7 @@ class MHDP :
         self.archive = []
 
         pop_size, args = self.attributes
-        n_fire_points = args["N"]
+        n_fire_points = args.get("N")
 
         initial_spread_speeds = args.get('a') * np.array(args.get('temperature')) + args.get('b') * np.array(args.get('wind_force')) + args.get('c') #v_0i : array type since I assume different points may have different temperatures T
         fire_spread_speeds = initial_spread_speeds * np.array(args.get('k_s')) * np.array(args.get('k_phi')) * np.array(args.get('k_w')) # v_si # k_ are just values of different areas
@@ -169,7 +169,7 @@ class MHDP :
             not_worse = True
             strictly_better = False
             for x, y in zip(item1, item2):
-                if y < x:   # if item2 < item1 in one objective => item1 is worse on that objective => not dominant
+                if x > y:   # if item2 < item1 in one objective => item1 is worse on that objective => not dominant
                     not_worse = False
                 elif x < y: # if item1 < item2 in one objective => item1 is better than item2 on at least one objective
                     strictly_better = True
@@ -380,7 +380,8 @@ class MHDP :
         pc = args.get('Pc')
 
         for individual in pop:
-            for i in range(len(individual)):
+            new_individual = individual.copy()
+            for i in range(len(new_individual)):
                 while True:
                     k = random.randint(0, len(pop)-1)
 
@@ -391,10 +392,10 @@ class MHDP :
 
                 r3 = random.random()
 
-                if r3 < pc and individual[i] != xk[i]:
-                    individual[i] = xk[i]
+                if r3 < pc and new_individual[i] != xk[i]:
+                    new_individual[i] = xk[i]
             
-            crossed_pop.append(individual)
+            crossed_pop.append(new_individual)
 
         crossed_pop = self.adjustment(crossed_pop)
         

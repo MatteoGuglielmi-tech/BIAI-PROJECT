@@ -51,16 +51,13 @@ Considering what has been said before, the dual-objective emergency scheduling o
 \end{equation}
 \text{s.t.}
 
-\begin{equation}
-    \label{eqn:constraints}
-    \begin{cases}
-        K \leq \sum_{j=1}^N \sum_{m=1}^M z_{0j}^m \leq M\\
-        L_i \leq \sum_{m=1}^M z_{0i}^m \leq U_i, i=1, \dots, N\\
-        z_{0i}^m \in \{0,1\}, m=1,\dots,M , i=1,\dots, N\\
-    \end{cases}
-\end{equation}
+\begin{numcases}{}
+     & $K \leq \sum_{j=1}^N \sum_{m=1}^M z_{0j}^m \leq M$ \label{eqn:constraints_a}\\
+     & $L_i \leq \sum_{m=1}^M z_{0i}^m \leq U_i, i=1, \dots, N$ \label{eqn:constraints_b}\\
+     & $z_{0i}^m \in \{0,1\}, m=1,\dots,M , i=1,\dots, N$ \label{eqn:constraints_c}
+\end{numcases}
 
-where :
+where:
 \begin{itemize}
     \item K : Lower bound of the total number of vehicles required for forest fire emergency scheduling
     \item M : Upper bound of the total number of fire engines in the fire emergency scheduling center

@@ -1,2 +1,8 @@
 \section{Implementation of MHDP}
-Spiegazione dell'implementazione
+For the implementation we used Python.
+To implement the MHDP algorithm we followed the pseudocodes present in 
+the paper where possible. In particular, for the generation of the population, the crossover
+and the adjustment of the solutions we used the pseudocodes.
+The mutation operation was easy to implement, we only needed to select two different random individuals and apply (\ref{eqn:pso}).
+To implement the evaluation procedure we had to implement also the 
+\textit{fast non-dominated sort} algorithm to find the pareto fronts.
