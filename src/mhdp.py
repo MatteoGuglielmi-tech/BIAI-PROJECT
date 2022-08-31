@@ -154,13 +154,13 @@ class MHDP :
         
         return (constr5 and constr6)
 
-    def check_all_candidates(self, loc: list[list[int]]) -> bool:
-        pop_size, args = self.attributes
+    # def check_all_candidates(self, loc: list[list[int]]) -> bool:
+    #     pop_size, args = self.attributes
         
-        checklist = []
-        for c in loc :
-            checklist.append(self.check_constraint(c))
-        return np.all(checklist)
+    #     checklist = []
+    #     for c in loc :
+    #         checklist.append(self.check_constraint(c))
+    #     return np.all(checklist)
 
     def is_dominant(self, item1, item2):    # modified https://github.com/aarongarrett/inspyred/blob/master/inspyred/ec/emo.py#L92
         if len(item1) != len(item2):
