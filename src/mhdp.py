@@ -383,18 +383,23 @@ class MHDP :
             new_individual = individual.copy()
             for i in range(len(new_individual)):
                 while True:
-                    k = random.randint(0, len(pop)-1)
+                    #k = random.randint(0, len(pop)-1)
+                    if i!= 0 :
+                        k = random.randint(i-1, i+1)  # getting randomly one of the two indices
+                    else: 
+                        k = i+1
 
                     if k!=i:
                         break
                     
                 xk = pop[k]
 
-                r3 = random.random()
+                r3 = random.uniform(0,1)
 
                 if r3 < pc and new_individual[i] != xk[i]:
+                    #print(f"Individual {i} crossed with individual {k}")
                     new_individual[i] = xk[i]
-            
+    
             crossed_pop.append(new_individual)
 
         crossed_pop = self.adjustment(crossed_pop)
