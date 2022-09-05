@@ -4,8 +4,8 @@ This algorithm is composed of 5 tasks : Solution Coding, Population Initializati
 \subsection{Solution Coding}
 Each solution is encoded into a vector of $N$ elements whose $i-$th element indicates the number of vehicles sent to the fire point at location $i$.
 \subsection{Generating the initial population}
-Each individual is created by generating $N$ random integer values, where the random values are chosen in the range \([L_i, U_i]\) to comply with constraint (\ref{eqn:constraints_a}). 
-This procedure is repeated until the individual comply also with constraint (\ref{eqn:constraints_b}).
+Each individual is created by generating $N$ random integer values, where the random values are chosen in the range \([L_i, U_i]\) to comply with constraint (\ref{eqn:constraints_b}). 
+This procedure is repeated until the individual comply also with constraint (\ref{eqn:constraints_a}).
 $PopSize$ individuals are generated.
 \subsection{Calculating Fitness Values and Screening Pareto Solutions}
 After having generated the initial population we compute the fitness value of each solution and we update the personal best \((P_{best})\) value of each individual and the global best value \((G_{best})\).
