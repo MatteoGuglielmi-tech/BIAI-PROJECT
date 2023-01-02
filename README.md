@@ -2,7 +2,6 @@
 
 
 <!--toc:start-->
-- [TOC](#toc)
 - [Authors](#authors)
 - [Dual-Objective Scheduling of Rescue Vehicles to Distinguish Forest Fires via Differential Evolution and Particle Swarm Optimization Combined Algorithm <a name="introduction"></a>](#dual-objective-scheduling-of-rescue-vehicles-to-distinguish-forest-fires-via-differential-evolution-and-particle-swarm-optimization-combined-algorithm-a-nameintroductiona)
   - [Project statement](#project-statement)
