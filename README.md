@@ -40,5 +40,5 @@ The flow chart followed during this work can be analyzed in the following figure
 ![MHDP Algorithm](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/mhdp_algo.png?raw=true)
 
 ## Results 
-![Results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/our_results_4_runs.png) ![Authors results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/authors_results.png)
+![Results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/our_results_4_runs.png?raw=true) ![Authors results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/authors_results.png?raw=true)
 
