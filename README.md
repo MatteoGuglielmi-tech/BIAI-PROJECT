@@ -1,9 +1,14 @@
 # TOC
+
+
 <!--toc:start-->
+- [TOC](#toc)
 - [Authors](#authors)
 - [Dual-Objective Scheduling of Rescue Vehicles to Distinguish Forest Fires via Differential Evolution and Particle Swarm Optimization Combined Algorithm <a name="introduction"></a>](#dual-objective-scheduling-of-rescue-vehicles-to-distinguish-forest-fires-via-differential-evolution-and-particle-swarm-optimization-combined-algorithm-a-nameintroductiona)
   - [Project statement](#project-statement)
   - [Experiments Data](#experiments-data)
+  - [Algorithm ingredients](#algorithm-ingredients)
+  - [Results](#results)
 <!--toc:end-->
 
 # Authors
@@ -37,8 +42,28 @@ the section "*V. RESULTS AND ANALYSIS*" of the [project's report](https://github
 
 ## Algorithm ingredients
 The flow chart followed during this work can be analyzed in the following figure:  
-![MHDP Algorithm](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/mhdp_algo.png?raw=true)
+<p align="center">
+  <img src="https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/blob/main/Report/IEEEtran/Images/mhdp_algo.png?raw=true" 
+  alt="MHDP Algorithm flow chart"
+  width=400/>
+</p>
 
-## Results 
-![Results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/our_results_4_runs.png?raw=true) ![Authors results](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/authors_results.png?raw=true)
+## Results
+The results obtained with our implementation resembles the authors' ones (don't be tricked by the different scale in the images).
+It is worth mentioning that during the development of this project we've met some difficulties due to unclear explanations and missing of 
+important variables' values. Despite that, the results turned out to be significant and satisfying.
+
+<p align="center">
+  <img src="https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/blob/main/Report/IEEEtran/Images/our_results_4_runs.png?raw=true" 
+  alt="Our algorithm Pareto solutions"
+  width=400/>
+</p>
+<p align="center">
+  <img src="https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/blob/main/Report/IEEEtran/Images/authors_results.png?raw=true" 
+  alt="Our algorithm Pareto solutions"
+  width=400/>
+</p>
+
+## Final Mark
+The final mark for this project is $30/30$.
 
