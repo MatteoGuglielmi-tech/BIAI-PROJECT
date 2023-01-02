@@ -37,7 +37,7 @@ the section "*V. RESULTS AND ANALYSIS*" of the [project's report](https://github
 
 ## Algorithm ingredients
 The flow chart followed during this work can be analyzed in the following figure:
-[!MHDP Algorithm](./Report/IEEEtran/Images/mhdp_algo.png)
+[!MHDP Algorithm](https://github.com/MatteoGuglielmi-tech/BIAI-PROJECT/tree/main/Report/IEEEtran/Images/mhdp_algo.png?raw=true)
 
 ## Results 
 [!Results](./Report/IEEEtran/Images/our_results_4_runs.png) [!Authors results](./Report/IEEEtran/Images/authors_results.png)
